@@ -11,7 +11,8 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+"node-telegram-bot-api": "^0.30.0"
   },
   "engines": {
     "node": ">=14"

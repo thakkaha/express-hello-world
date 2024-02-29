@@ -1,0 +1,199 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@sanskrit-coders/sanscript@1.1.0/sanscript.min.js"></script>
+<style>
+BODY {
+  background: black;
+  color: #DDDDDD;
+  font-family: courier new;
+  text-align: center;
+}
+
+H1 {
+  text-align: center;
+  font-size: 14pt;
+  font-weight: normal;
+}
+#grid {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#grid TR TD{
+  border:1px solid white;
+  background: #999999;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+}
+
+#grid TR TD.clicked {
+    background: #333333;
+}
+
+#grid TR TD.mine {
+    background: #FF0000;
+}
+
+BUTTON {
+  margin: 12px;
+}
+
+</style>
+
+</head>
+<body>
+<H1>💣 संस्कृतम्  Minesweeper 🧹</H1>
+
+<table id=grid>
+</table>
+<br>
+<BUTTON onclick="generateGrid();">पुनः - Again</BUTTON>
+<br>
+<p>Clicks in this game = <span id='cc'>०</span></p>
+<p>High Score (Clicks saved) = <span id='hs'>०</span></p>
+<p>Fastest Fail (lost in clicks) = <span id='ls'>०</span></p>
+<script>
+var url = new URL(location.href);
+var playerid = url.searchParams.get("id");
+var hscs= (localStorage["zatammss5hs"]) ? localStorage["zatammss5hs"] : 0;
+var lscs= (localStorage["zatammss5ls"]) ? localStorage["zatammss5ls"] : 20;
+document.getElementById("hs").innerHTML=Sanscript.t(String(hscs),'iast', 'devanagari');
+document.getElementById("ls").innerHTML=Sanscript.t(String(lscs),'iast', 'devanagari');
+var siz=5;
+var hs=20;
+var ls=0;
+document.addEventListener('contextmenu', event => event.preventDefault());
+//minesweeper game by 101computing.net - www.101computing.et/minesweeper-in-javascript/
+var grid = document.getElementById("grid");
+var testMode = false; //Turn this variable to true to see where the mines are
+generateGrid();
+
+function generateGrid() {
+ hs=20;
+ ls=0;
+   document.getElementById("cc").innerHTML=Sanscript.t(String(ls),'iast', 'devanagari');
+  grid.innerHTML="";
+  for (var i=0; i<siz; i++) {
+    row = grid.insertRow(i);
+    for (var j=0; j<siz; j++) {
+      cell = row.insertCell(j);
+      cell.onmousedown = function(ev) { if (ev.button==2) {
+	  markCell(this);
+	  //ev.returnValue = false;ev.preventDefault();return false;
+	  } 
+	  else { 
+	  hs = hs-1; 
+	  ls++;
+	  document.getElementById("cc").innerHTML=Sanscript.t(String(ls),'iast', 'devanagari');
+      clickCell(this); 
+      }
+	  };
+      var mine = document.createAttribute("data-mine");       
+      mine.value = "false";             
+      cell.setAttributeNode(mine);
+    }
+  }
+  addMines();
+}
+
+function addMines() {
+  //Add mines randomly
+  for (var i=0; i<parseInt((siz*siz)/5); i++) {
+    var row = Math.floor((Math.random() * 10) % siz);
+    var col = Math.floor((Math.random() * 10) % siz);
+    var cell = grid.rows[row].cells[col];
+    cell.setAttribute("data-mine","true");
+    if (testMode) cell.innerHTML="X";
+  }
+}
+
+function revealMines(col) {
+    //Highlight all mines in red
+    for (var i=0; i<siz; i++) {
+      for(var j=0; j<siz; j++) {
+        var cell = grid.rows[i].cells[j];
+        if (cell.getAttribute("data-mine")=="true") cell.style.backgroundColor=col;
+        cell.onmousedown = "";
+      }
+    }
+}
+
+function checkLevelCompletion() {
+  var levelComplete = true;
+    for (var i=0; i<siz; i++) {
+      for(var j=0; j<siz; j++) {
+        if ((grid.rows[i].cells[j].getAttribute("data-mine")=="false") && (grid.rows[i].cells[j].innerHTML=="")) levelComplete=false;
+      }
+  }
+  if (levelComplete) {
+    alert("जयः 🙂 ! Done in "+parseInt(20-hs)+" ! \n Clicks saved = " +hs );
+
+    hscs= (localStorage["zatammss5hs"]) ? localStorage["zatammss5hs"] : 0;
+    localStorage["zatammss5hs"]=Math.max(hs,hscs);
+    document.getElementById("hs").innerHTML=Sanscript.t(String(Math.max(hs,hscs)),'iast', 'devanagari');
+    revealMines("#0000FF");
+
+    // Submit highscore to Telegram
+    var xmlhttp = new XMLHttpRequest();
+    var url = "https://express-hello-world-gc0n.onrender.com/highscore/" + hs + "?id=" + playerid;
+    xmlhttp.onreadystatechange = function() {
+              };
+    xmlhttp.open("GET", url, true);
+    xmlhttp.send();
+  }
+}
+function markCell(cell) {
+if (cell.style.backgroundColor=="tomato")
+{
+cell.style.backgroundColor="";
+
+}
+else
+{
+
+cell.style.backgroundColor="tomato";
+}
+}
+function clickCell(cell) {
+cell.style.backgroundColor="";
+  //Check if the end-user clicked on a mine
+  if (cell.getAttribute("data-mine")=="true") {
+    
+    lscs= (localStorage["zatammss5ls"]) ? localStorage["zatammss5ls"] : 20;
+    localStorage["zatammss5ls"]=Math.min(ls,lscs);
+    document.getElementById("ls").innerHTML=Sanscript.t(String(Math.min(ls,lscs)),'iast', 'devanagari');
+       revealMines("#FF0000");
+	   alert("पराजयः 🙁 ! in clicks = "+ls);
+  } else {
+         cell.className="clicked";
+  
+    //Count and display the number of adjacent mines
+    var mineCount=0;
+    var cellRow = cell.parentNode.rowIndex;
+    var cellCol = cell.cellIndex;
+    //alert(cellRow + " " + cellCol);
+    for (var i=Math.max(cellRow-1,0); i<=Math.min(cellRow+1,siz-1); i++) {
+      for(var j=Math.max(cellCol-1,0); j<=Math.min(cellCol+1,siz-1); j++) {
+        if (grid.rows[i].cells[j].getAttribute("data-mine")=="true") mineCount++;
+      }
+    }
+    if (mineCount==0) cell.innerHTML=" ";
+	else
+	cell.innerHTML=Sanscript.t(String(mineCount),'iast', 'devanagari')
+    if (mineCount==0) { 
+      //Reveal all adjacent cells as they do not have a mine
+      for (var i=Math.max(cellRow-1,0); i<=Math.min(cellRow+1,siz-1); i++) {
+        for(var j=Math.max(cellCol-1,0); j<=Math.min(cellCol+1,siz-1); j++) {
+          //Recursive Call
+          if (grid.rows[i].cells[j].innerHTML=="") clickCell(grid.rows[i].cells[j]);
+        }
+      }
+    }
+    checkLevelCompletion();
+  }
+}
+</script>
+</body>
+</html>
